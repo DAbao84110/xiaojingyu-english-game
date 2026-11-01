@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>鲸鱼娘的大米饭冒险</title>
+<style>
+  :root{
+    --deep:#06345a;
+    --sea:#0b6bb5;
+    --sky:#7fd3ff;
+    --rice:#fffaf0;
+    --gold:#ffc93c;
+    --green:#2ecc71;
+    --red:#ff6b6b;
+    --ink:#123;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#7fd3ff 0%,#3aa7e0 45%,#0b6bb5 100%);
+    overflow:hidden;
+    user-select:none;
+  }
+  .bubbles{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+  .bubble{
+    position:absolute; bottom:-40px; border-radius:50%;
+    background:rgba(255,255,255,.35);
+    animation:rise linear infinite;
+  }
+  @keyframes rise{
+    0%{transform:translateY(0) scale(.6); opacity:0;}
+    10%{opacity:.8;}
+    100%{transform:translateY(-110vh) scale(1.1); opacity:0;}
+  }
+  .wave{
+    position:fixed; left:-10%; width:120%; height:16vh; bottom:-4vh; z-index:0;
+    background:radial-gradient(ellipse at 50% 0%, #4fc3f7 0%, transparent 70%);
+    opacity:.45;
+    animation:wave 6s ease-in-out infinite;
+  }
+  @keyframes wave{
+    0%,100%{transform:translateY(0) scaleY(1);}
+    50%{transform:translateY(-1.5vh) scaleY(1.08);}
+  }
+
+  .app{
+    position:relative; z-index:2;
+    width:min(520px,100%);
+    height:100dvh;
+    margin:0 auto;
+    display:flex; flex-direction:column;
+    padding:10px 14px 18px;
+  }
+
+  .hud{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; padding:6px 4px 10px;
+    color:#fff; font-size:13px; font-weight:700;
+    text-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .hud .pill{
+    display:flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,.22);
+    border:1px solid rgba(255,255,255,.35);
+    padding:5px 10px; border-radius:999px;
+    backdrop-filter:blur(4px);
+  }
+  .dots{display:flex; gap:4px; align-items:center;}
+  .dot{width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.35);}
+  .dot.done{background:var(--gold); box-shadow:0 0 6px var(--gold);}
+  .dot.now{background:#fff; transform:scale(1.25);}
+  .hudright{display:flex; align-items:center; gap:8px;}
+  .mute{
+    width:34px; height:34px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.35);
+    background:rgba(255,255,255,.22);
+    color:#fff; font-size:16px; line-height:1;
+    cursor:pointer; backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .mute:active{transform:scale(.94);}
+
+  .stage{
+    position:relative; flex:1;
+    display:flex; align-items:flex-end; justify-content:center;
+    min-height:100px; max-height:190px;
+  }
+  .whale{
+    font-size:70px; line-height:1;
+    filter:drop-shadow(0 8px 10px rgba(0,0,0,.2));
+    animation:swim 3.6s ease-in-out infinite;
+    transform-origin:center bottom;
+    will-change:transform;
+  }
+  @keyframes swim{
+    0%{transform:translateX(-8px) translateY(0) rotate(-5deg);}
+    25%{transform:translateX(0) translateY(-9px) rotate(3deg);}
+    50%{transform:translateX(8px) translateY(-2px) rotate(5deg);}
+    75%{transform:translateX(0) translateY(-9px) rotate(-3deg);}
+    100%{transform:translateX(-8px) translateY(0) rotate(-5deg);}
+  }
+  .whale.sad{animation:sadshake .5s ease;}
+  @keyframes sadshake{
+    0%,100%{transform:rotate(0) translateX(0);}
+    25%{transform:rotate(-9deg) translateX(-5px);}
+    75%{transform:rotate(9deg) translateX(5px);}
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0) rotate(-2deg);}
+    50%{transform:translateY(-10px) rotate(2deg);}
+  }
+  .whale.happy{animation:jump .7s ease;}
+  @keyframes jump{
+    0%{transform:translateY(0) scale(1);}
+    30%{transform:translateY(-26px) scale(1.12) rotate(-8deg);}
+    60%{transform:translateY(0) scale(.96,1.04);}
+    100%{transform:translateY(0) scale(1);}
+  }
+  .speech{
+    position:absolute; top:-2px;
+    background:var(--rice); color:var(--deep);
+    padding:8px 14px; border-radius:14px;
+    font-size:14px; font-weight:700; white-space:nowrap;
+    box-shadow:0 6px 16px rgba(0,0,0,.18);
+    opacity:0; transform:translateY(6px) scale(.9);
+    transition:.25s ease;
+  }
+  .speech.show{opacity:1; transform:translateY(0) scale(1);}
+  .speech::after{
+    content:""; position:absolute; bottom:-7px; left:50%; margin-left:-6px;
+    border:6px solid transparent; border-top-color:var(--rice); border-bottom:0;
+  }
+
+  .card{
+    background:var(--rice);
+    border-radius:26px;
+    padding:16px 15px 15px;
+    box-shadow:0 14px 30px rgba(0,20,50,.25);
+    border:3px solid rgba(255,255,255,.8);
+    margin-top:4px;
+  }
+  .qtag{
+    display:inline-block; font-size:12px; font-weight:800; color:#fff;
+    background:linear-gradient(135deg,#3aa7e0,#0b6bb5);
+    padding:4px 11px; border-radius:999px; margin-bottom:9px;
+  }
+  .qtag.gold{background:linear-gradient(135deg,#ffb703,#f7730a);}
+  .q{
+    font-size:18px; line-height:1.55; font-weight:800;
+    min-height:54px; margin:0 0 12px;
+  }
+  .opts{display:flex; flex-direction:column; gap:9px;}
+  .opt{
+    display:flex; align-items:center; gap:10px;
+    width:100%; text-align:left;
+    border:2.5px solid #dfe8ef;
+    background:#fff;
+    border-radius:18px;
+    padding:12px 13px;
+    font-size:16.5px; font-weight:700; color:var(--ink);
+    cursor:pointer;
+    transition:.15s ease;
+    font-family:inherit;
+  }
+  .opt .k{
+    flex:0 0 30px; height:30px; border-radius:50%;
+    background:#eef5fb; color:var(--sea);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:900;
+  }
+  .opt:active{transform:scale(.98);}
+  .opt.correct{
+    border-color:var(--green); background:#eafaf0;
+    animation:pop .4s ease;
+  }
+  .opt.correct .k{background:var(--green); color:#fff;}
+  .opt.wrong{
+    border-color:var(--red); background:#fff0f0;
+    animation:shake .4s ease;
+  }
+  .opt.wrong .k{background:var(--red); color:#fff;}
+  .opt.dim{opacity:.45;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-7px);}
+    50%{transform:translateX(7px);}
+    75%{transform:translateX(-4px);}
+  }
+  @keyframes pop{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.03);}
+    100%{transform:scale(1);}
+  }
+
+  .feedback{
+    margin-top:10px; font-size:14.5px; line-height:1.6;
+    padding:11px 13px; border-radius:16px;
+    display:none;
+    animation:fadeIn .25s ease;
+  }
+  .feedback.show{display:block;}
+  .feedback.hint{background:#fff7e0; color:#8a6100; border:2px dashed #ffd166;}
+  .feedback.tip{background:#eef7ff; color:#0b4f7a; border:2px solid #b9e0ff;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  .nextbtn{
+    display:none; width:100%; margin-top:10px;
+    border:none; border-radius:18px; padding:14px;
+    font-size:17px; font-weight:900; color:#fff; font-family:inherit;
+    background:linear-gradient(135deg,#ffb703,#ff8800);
+    box-shadow:0 8px 18px rgba(255,150,0,.35);
+    cursor:pointer;
+  }
+  .nextbtn.show{display:block;}
+  .nextbtn:active{transform:scale(.98);}
+  .nextbtn:disabled{
+    background:linear-gradient(135deg,#cfd6dd,#aab4be);
+    box-shadow:none; cursor:not-allowed; opacity:.9;
+    color:#fff;
+  }
+  .reward{
+    margin:6px 0 10px; padding:10px 14px;
+    border-radius:16px; font-size:15px; font-weight:900;
+    background:linear-gradient(135deg,#fff6d8,#ffe08a);
+    color:#8a4b00; border:2px solid #ffcf4d;
+    animation:pop .5s ease;
+  }
+  .reward.big{
+    background:linear-gradient(135deg,#fff3c4,#ffd54f);
+    border-color:#ffb300;
+    font-size:16px;
+    box-shadow:0 0 18px rgba(255,193,7,.55);
+  }
+  .confetti{
+    position:fixed; width:10px; height:14px; z-index:80;
+    pointer-events:none; border-radius:2px;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    0%{transform:translateY(-40px) rotate(0deg); opacity:1;}
+    100%{transform:translateY(105vh) rotate(720deg); opacity:.9;}
+  }
+
+  .screen{
+    position:fixed; inset:0; z-index:20;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:22px; text-align:center; color:#fff;
+    background:linear-gradient(180deg,#0a2a4a 0%,#0b6bb5 100%);
+    transition:opacity .4s ease;
+    overflow-y:auto;
+  }
+  .screen.hide{opacity:0; pointer-events:none;}
+  .bigwhale{font-size:88px; animation:float 3s ease-in-out infinite;}
+  .title{
+    font-size:28px; font-weight:900; margin:10px 0 4px;
+    text-shadow:0 4px 0 rgba(0,0,0,.15);
+  }
+  .sub{font-size:14px; opacity:.85; line-height:1.7; max-width:360px; margin-bottom:18px;}
+  .chapterbtn{
+    display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+    width:min(340px,88vw); text-align:left;
+    border:3px solid rgba(255,255,255,.5);
+    border-radius:20px; padding:14px 18px; margin-bottom:12px;
+    background:rgba(255,255,255,.14);
+    color:#fff; font-family:inherit; cursor:pointer;
+    transition:.15s ease;
+  }
+  .chapterbtn:active{transform:scale(.98);}
+  .chapterbtn b{font-size:19px;}
+  .chapterbtn span{font-size:12.5px; opacity:.8;}
+  .chapterbtn.gold{border-color:rgba(255,201,60,.8); background:rgba(255,201,60,.18);}
+
+  .resultcard{
+    background:var(--rice); color:var(--ink);
+    border-radius:26px; padding:22px 20px;
+    width:min(380px,92vw);
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  .resultcard h2{margin:0 0 4px; font-size:23px; color:var(--deep);}
+  .score{font-size:44px; font-weight:900; color:#e67e22; margin:4px 0;}
+  .score small{font-size:15px; color:#888; font-weight:700;}
+  .passline{
+    display:inline-block; font-size:16px; font-weight:900;
+    padding:5px 18px; border-radius:999px; margin:2px 0 8px;
+  }
+  .passline.ok{background:#e8f9ee; color:#1e9e52; border:2px solid #7fdc9f;}
+  .passline.no{background:#fff0f0; color:#d33; border:2px solid #ffb3b3;}
+  .flying-rice{
+    position:fixed; font-size:32px; z-index:70; pointer-events:none;
+    transform:translate(-50%,-50%);
+    transition:transform .72s cubic-bezier(.4,0,.55,1), opacity .72s ease;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.2));
+  }
+  .whale.eating{animation:eat .6s ease;}
+  @keyframes eat{
+    0%{transform:scale(1);}
+    40%{transform:scale(1.18,.9) translateY(4px);}
+    70%{transform:scale(.94,1.07);}
+    100%{transform:scale(1);}
+  }
+  .medal{font-size:38px;}
+  .nameline{font-size:14.5px; color:#666; margin:8px 0 14px;}
+  .btnrow{display:flex; gap:10px; justify-content:center;}
+  .startbtn{
+    border:none; border-radius:999px; padding:14px 30px;
+    font-size:17px; font-weight:900; color:#7a4a00; font-family:inherit;
+    background:linear-gradient(180deg,#ffe08a,#ffc93c);
+    box-shadow:0 8px 0 #d99b00, 0 12px 20px rgba(0,0,0,.22);
+    cursor:pointer; transition:.1s;
+  }
+  .startbtn:active{transform:translateY(3px); box-shadow:0 5px 0 #d99b00;}
+
+  .toast{
+    position:fixed; left:50%; top:36%; transform:translate(-50%,-50%) scale(.7);
+    background:rgba(255,255,255,.95); color:var(--deep);
+    padding:14px 26px; border-radius:18px; font-size:22px; font-weight:900;
+    opacity:0; pointer-events:none; z-index:50; transition:.25s ease;
+    box-shadow:0 12px 30px rgba(0,0,0,.25);
+  }
+  .toast.show{opacity:1; transform:translate(-50%,-50%) scale(1);}
+</style>
+</head>
+<body>
+
+<div class="bubbles" id="bubbles"></div>
+<div class="wave"></div>
+
+<!-- 开始页 -->
+<div class="screen" id="startScreen">
+  <div class="bigwhale">🐋</div>
+  <div class="title">鲸鱼娘的大米饭冒险</div>
+  <div class="sub">答对一题得一碗米饭，答错鲸鱼娘会悄悄讲原因。<br>选一个章节开始吧～</div>
+  <button class="chapterbtn" id="btnG2">
+    <b>🐋 二年级 · 巩固</b>
+    <span>长度单位 · 100 以内加减 · 角 · 乘法口诀 · 认识时间 · 搭配　共 9 关 27 题</span>
+  </button>
+  <button class="chapterbtn gold" id="btnG3">
+    <b>🚀 三年级 · 预习</b>
+    <span>时分秒 · 测量 · 万以内加减 · 多位数乘一位数 · 周长 · 分数 · 集合　共 7 关 21 题</span>
+  </button>
+</div>
+
+<!-- 结算页 -->
+<div class="screen hide" id="endScreen">
+  <div class="resultcard">
+    <div class="medal" id="medal">🏆</div>
+    <h2 id="endTitle">冒险完成啦！</h2>
+    <div class="score"><span id="scoreNum">0</span><small> 分</small></div>
+    <div class="passline ok" id="passLine">✅ 及格</div>
+    <div class="nameline" id="riceInfo">答对 0 / 27 题 · 🍚 0 碗</div>
+    <div class="nameline" id="praise">天天真棒！</div>
+    <div class="reward" id="reward" style="display:none"></div>
+    <div class="btnrow">
+      <button class="startbtn" id="againBtn">再玩一次</button>
+      <button class="startbtn" id="homeBtn" style="background:linear-gradient(180deg,#cfe9ff,#8fd0ff);color:#0b4f7a;box-shadow:0 8px 0 #4a9ad4,0 12px 20px rgba(0,0,0,.2)">换一章</button>
+    </div>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div class="app">
+  <div class="hud">
+    <div class="pill">🍚 <span id="riceHud">0</span></div>
+    <div class="dots" id="dots"></div>
+    <div class="hudright">
+      <div class="pill">⭐ <span id="starHud">0</span></div>
+      <button class="mute" id="muteBtn" title="背景音乐">🔊</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="speech" id="speech">冲呀！</div>
+    <div class="whale" id="whale">🐋</div>
+  </div>
+
+  <div class="card">
+    <span class="qtag" id="qtag">第 1 关</span>
+    <p class="q" id="qtext">题目</p>
+    <div class="opts" id="opts"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="nextbtn" id="nextBtn">下一题 →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">太棒啦！</div>
+
+<script>
+/* ================= 题库 ================= */
+const CHAPTERS = [
+  {
+    id: "g2",
+    name: "二年级 · 巩固",
+    levels: [
+      {
+        name: "数字海洋", icon: "🌊",
+        qs: [
+          {
+            q: "3□＋35 的得数，一定比 60 大吗？",
+            opts: ["一定比 60 大", "不一定", "一定比 60 小"],
+            a: 0,
+            hint: "3□ 最小是 30 哦，再算算看。",
+            tip: "3□ 最小是 30，30＋35＝65，所以一定比 60 大。"
+          },
+          {
+            q: "90－3□ 的得数，一定比 60 大吗？",
+            opts: ["一定比 60 大", "不一定", "一定比 60 小"],
+            a: 1,
+            hint: "3□ 最大可以是 39，减一减试试。",
+            tip: "90－39＝51，比 60 小；90－30＝60，刚好等于 60。所以不一定。"
+          },
+          {
+            q: "4□＋2□ 的得数，一定比 60 大吗？",
+            opts: ["一定比 60 大", "不一定", "一定比 60 小"],
+            a: 1,
+            hint: "最小的 4□ 和 2□ 加起来是多少？",
+            tip: "40＋20＝60，刚好等于 60，不“大于”60，所以不一定。"
+          },
+          {
+            q: "5□＋20 的得数，一定比 60 大吗？",
+            opts: ["一定比 60 大", "不一定", "一定比 60 小"],
+            a: 0,
+            hint: "5□ 最小是 50，加 20 是多少？",
+            tip: "50＋20＝70，最小也超过 60，所以一定比 60 大。"
+          },
+          {
+            q: "83－4□ 的得数，一定比 40 大吗？",
+            opts: ["一定比 40 大", "不一定", "一定比 40 小"],
+            a: 1,
+            hint: "4□ 最大可以是 49，83 减 49 试试。",
+            tip: "83－49＝34，比 40 小；83－40＝43，比 40 大。所以不一定。"
+          }
+        ]
+      },
+      {
+        name: "括号迷宫", icon: "🧩",
+        qs: [
+          {
+            q: "72－(51－9)＝？",
+            opts: ["12", "30", "21"],
+            a: 1,
+            hint: "有括号，先算括号里的 51－9。",
+            tip: "先算 51－9＝42，再算 72－42＝30。"
+          },
+          {
+            q: "62－(41－8)＝？",
+            opts: ["29", "21", "13"],
+            a: 0,
+            hint: "先算 41－8，再拿 62 去减。",
+            tip: "41－8＝33，62－33＝29。"
+          },
+          {
+            q: "60－36＝？",
+            opts: ["24", "34", "44"],
+            a: 0,
+            hint: "个位 0 减 6 不够，要退位哦。",
+            tip: "60－36＝24。个位退一当十，10－6＝4，十位剩 5－3＝2。"
+          },
+          {
+            q: "80－(26＋14)＝？",
+            opts: ["40", "60", "30"],
+            a: 0,
+            hint: "先算括号里的 26＋14。",
+            tip: "26＋14＝40，80－40＝40。"
+          },
+          {
+            q: "45－(20－8)＝？",
+            opts: ["33", "17", "27"],
+            a: 0,
+            hint: "先算括号里的 20－8。",
+            tip: "20－8＝12，45－12＝33。"
+          }
+        ]
+      },
+      {
+        name: "谁多谁少", icon: "⚖️",
+        qs: [
+          {
+            q: "淘淘写了 45 个大字，____，依依写了多少个大字？<br>算式是 45－9＝36，横线上应该填什么？",
+            opts: ["依依比淘淘多写 9 个", "淘淘比依依多写 9 个", "淘淘比依依少写 9 个"],
+            a: 1,
+            hint: "45 减 9 变少了，说明谁多？",
+            tip: "45－9＝36，说明依依比淘淘少 9 个，也就是淘淘比依依多写 9 个。"
+          },
+          {
+            q: "书架上有 32 本书，____，下层有多少本？<br>算式是 32－8＝24，横线上填什么？",
+            opts: ["下层比上层多 8 本", "上层比下层多 8 本", "上层比下层少 8 本"],
+            a: 1,
+            hint: "32 变成 24，是变少了还是变多了？",
+            tip: "32－8＝24，下层比上层少 8 本，也就是上层比下层多 8 本。"
+          },
+          {
+            q: "小明有 28 张卡片，____，小红有多少张？<br>算式是 28＋6＝34，横线上填什么？",
+            opts: ["小红比小明多 6 张", "小明比小红多 6 张", "小明比小红少 6 张"],
+            a: 0,
+            hint: "28 加 6 变多了，说明小红怎么样？",
+            tip: "28＋6＝34，说明小红比小明多 6 张。"
+          },
+          {
+            q: "小红有 36 颗糖，____，小刚有多少颗？<br>算式是 36＋7＝43，横线上填什么？",
+            opts: ["小刚比小红多 7 颗", "小红比小刚多 7 颗", "小红比小刚少 7 颗"],
+            a: 0,
+            hint: "36 加 7 变多了。",
+            tip: "36＋7＝43，说明小刚比小红多 7 颗。"
+          },
+          {
+            q: "树上有 54 只鸟，____，树下有多少只？<br>算式是 54－6＝48，横线上填什么？",
+            opts: ["树上比树下多 6 只", "树下比树上多 6 只", "树上比树下少 6 只"],
+            a: 0,
+            hint: "54 减 6 变少了，树上更多还是更少？",
+            tip: "54－6＝48，树上比树下多 6 只。"
+          }
+        ]
+      },
+      {
+        name: "跳跳岛", icon: "🐒",
+        qs: [
+          {
+            q: "小猴每次跳 2 格，跳了 5 次，一共跳了几格？",
+            opts: ["7 格", "10 格", "12 格"],
+            a: 1,
+            hint: "5 个 2 相加，用乘法算更快。",
+            tip: "2×5＝10（格）。"
+          },
+          {
+            q: "小兔每次跳 3 格，跳了 4 次，一共跳了几格？",
+            opts: ["7 格", "12 格", "9 格"],
+            a: 1,
+            hint: "4 个 3 相加是多少？",
+            tip: "3×4＝12（格）。"
+          },
+          {
+            q: "7 个 8 相加，用乘法怎么算？",
+            opts: ["8×7＝56", "8×7＝54", "7＋8＝15"],
+            a: 0,
+            hint: "7 个 8 写成乘法是 8×7，口诀是七八五十六。",
+            tip: "8×7＝56，口诀：七八五十六。"
+          },
+          {
+            q: "4 个 6 相加，用乘法怎么算？",
+            opts: ["6×4＝24", "6×4＝18", "4＋6＝10"],
+            a: 0,
+            hint: "口诀：四六二十四。",
+            tip: "6×4＝24。"
+          },
+          {
+            q: "9×3＝？",
+            opts: ["27", "24", "21"],
+            a: 0,
+            hint: "口诀：三九二十七。",
+            tip: "9×3＝27。"
+          },
+          {
+            q: "8×8＝？",
+            opts: ["64", "56", "72"],
+            a: 0,
+            hint: "口诀：八八六十四。",
+            tip: "8×8＝64。"
+          }
+        ]
+      },
+      {
+        name: "单位天平", icon: "📏",
+        qs: [
+          {
+            q: "47－19 ○ 30，○ 里填什么？",
+            opts: ["＞", "＜", "＝"],
+            a: 1,
+            hint: "先算 47－19 等于几。",
+            tip: "47－19＝28，28＜30。"
+          },
+          {
+            q: "30 厘米 ○ 3 米，○ 里填什么？",
+            opts: ["＞", "＜", "＝"],
+            a: 1,
+            hint: "1 米＝100 厘米，3 米是多少厘米？",
+            tip: "3 米＝300 厘米，30＜300。"
+          },
+          {
+            q: "58 厘米＋42 厘米 ○ 1 米，○ 里填什么？",
+            opts: ["＞", "＜", "＝"],
+            a: 2,
+            hint: "先算 58＋42 等于多少厘米。",
+            tip: "58＋42＝100 厘米，100 厘米＝1 米，所以相等。"
+          },
+          {
+            q: "1 米 ○ 100 厘米，○ 里填什么？",
+            opts: ["＞", "＜", "＝"],
+            a: 2,
+            hint: "1 米就是 100 厘米。",
+            tip: "1 米＝100 厘米，相等。"
+          },
+          {
+            q: "5 米 ○ 400 厘米，○ 里填什么？",
+            opts: ["＞", "＜", "＝"],
+            a: 0,
+            hint: "5 米＝500 厘米。",
+            tip: "5 米＝500 厘米，500＞400。"
+          }
+        ]
+      },
+      {
+        name: "角角乐园", icon: "📐",
+        qs: [
+          {
+            q: "一个长方形有几个直角？",
+            opts: ["2 个", "4 个", "6 个"],
+            a: 1,
+            hint: "数一数长方形的四个角。",
+            tip: "长方形有 4 个角，而且 4 个都是直角。"
+          },
+          {
+            q: "比直角小的角叫什么角？",
+            opts: ["锐角", "钝角", "直角"],
+            a: 0,
+            hint: "比直角小的是锐角，比直角大的是钝角。",
+            tip: "比直角小的角叫锐角，比直角大的角叫钝角。"
+          },
+          {
+            q: "长方形加一条对角线，一共有几条线段？",
+            opts: ["4 条", "5 条", "6 条"],
+            a: 1,
+            hint: "4 条边，再加 1 条对角线。",
+            tip: "4 条边＋1 条对角线＝5 条线段。"
+          },
+          {
+            q: "比直角大的角叫什么角？",
+            opts: ["钝角", "锐角", "直角"],
+            a: 0,
+            hint: "张开得比直角还大的那个角。",
+            tip: "比直角大的角叫钝角。"
+          },
+          {
+            q: "一个三角形最多有几个直角？",
+            opts: ["1 个", "2 个", "3 个"],
+            a: 0,
+            hint: "三角形里最多只有一个直角。",
+            tip: "一个三角形最多只有 1 个直角。"
+          }
+        ]
+      },
+      {
+        name: "米饭厨房", icon: "🍚",
+        qs: [
+          {
+            q: "3 盘桃子，每盘 5 个，另外还有 2 个。<br>下面哪个算式是<b>错</b>的？",
+            opts: ["5×3＋2", "5×4－3", "5×3－2"],
+            a: 2,
+            hint: "先算一共 17 个，再找一个不等于 17 的。",
+            tip: "5×3＋2＝17，5×4－3＝17，只有 5×3－2＝13 是错的。"
+          },
+          {
+            q: "3 串糖葫芦，每串 6 个，又加了 2 个，一共几个？",
+            opts: ["20 个", "18 个", "22 个"],
+            a: 0,
+            hint: "6×3 再加 2。",
+            tip: "6×3＋2＝20（个）。"
+          },
+          {
+            q: "一根绳子长 1 米，剪去 35 厘米，还剩多少厘米？",
+            opts: ["65 厘米", "75 厘米", "35 厘米"],
+            a: 0,
+            hint: "先把 1 米换成厘米。",
+            tip: "1 米＝100 厘米，100－35＝65（厘米）。"
+          },
+          {
+            q: "4 盘苹果，每盘 6 个，吃了 5 个，还剩几个？",
+            opts: ["19 个", "24 个", "29 个"],
+            a: 0,
+            hint: "先算 6×4，再减 5。",
+            tip: "6×4－5＝19（个）。"
+          },
+          {
+            q: "2 盒铅笔，每盒 8 支，又买了 3 支，一共几支？",
+            opts: ["19 支", "16 支", "11 支"],
+            a: 0,
+            hint: "先算 8×2，再加 3。",
+            tip: "8×2＋3＝19（支）。"
+          }
+        ]
+      },
+      {
+        name: "时间小火车", icon: "⏰",
+        qs: [
+          {
+            q: "1 时等于多少分？",
+            opts: ["60 分", "100 分", "30 分"],
+            a: 0,
+            hint: "分针走一圈，时针正好走一大格。",
+            tip: "1 时＝60 分。"
+          },
+          {
+            q: "分针指向 6，时针在 3 和 4 之间，现在是几时几分？",
+            opts: ["3 时 30 分", "6 时 3 分", "3 时 6 分"],
+            a: 0,
+            hint: "分针指 6 是 30 分，时针还没走到 4。",
+            tip: "分针指 6 是 30 分，时针在 3 和 4 之间，所以是 3 时 30 分。"
+          },
+          {
+            q: "现在是 8 时 20 分，再过 40 分钟是几时几分？",
+            opts: ["9 时", "8 时 60 分", "9 时 40 分"],
+            a: 0,
+            hint: "20 分＋40 分＝60 分，60 分就是 1 时。",
+            tip: "8 时 20 分＋40 分＝8 时 60 分＝9 时。"
+          },
+          {
+            q: "分针走一大格是多少分钟？",
+            opts: ["5 分钟", "1 分钟", "10 分钟"],
+            a: 0,
+            hint: "钟面上每个大格里有 5 个小格。",
+            tip: "分针走一小格是 1 分，走一大格是 5 分钟。"
+          },
+          {
+            q: "9 时 45 分，分针指向数字几？",
+            opts: ["9", "45", "8"],
+            a: 0,
+            hint: "45 分就是 9 个大格，分针指 9。",
+            tip: "45 分＝9 个 5 分，分针指向 9。"
+          }
+        ]
+      },
+      {
+        name: "搭配衣橱", icon: "👕",
+        qs: [
+          {
+            q: "有 2 件上衣、3 条裤子，一件上衣配一条裤子，一共有几种穿法？",
+            opts: ["5 种", "6 种", "4 种"],
+            a: 1,
+            hint: "每件上衣都能配 3 条裤子。",
+            tip: "2×3＝6（种）。"
+          },
+          {
+            q: "用 1、2、3 三张数字卡片，能摆出几个不同的两位数？",
+            opts: ["6 个", "3 个", "9 个"],
+            a: 0,
+            hint: "十位有 3 种选法，个位剩下 2 种。",
+            tip: "12、13、21、23、31、32，一共 6 个。"
+          },
+          {
+            q: "3 个小朋友，每两人握一次手，一共握几次？",
+            opts: ["3 次", "6 次", "2 次"],
+            a: 0,
+            hint: "甲乙、甲丙、乙丙。",
+            tip: "一共 3 次：甲乙、甲丙、乙丙。"
+          },
+          {
+            q: "有 3 件上衣、2 条裙子，一件上衣配一条裙子，一共有几种搭配？",
+            opts: ["6 种", "5 种", "8 种"],
+            a: 0,
+            hint: "3 乘 2。",
+            tip: "3×2＝6（种）。"
+          },
+          {
+            q: "饮料有 3 种，点心有 2 种，各选一种，有几种选法？",
+            opts: ["6 种", "5 种", "9 种"],
+            a: 0,
+            hint: "每种饮料都能配 2 种点心。",
+            tip: "3×2＝6（种）。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "g3",
+    name: "三年级 · 预习",
+    levels: [
+      {
+        name: "时分秒", icon: "⏱️",
+        qs: [
+          {
+            q: "2 分等于多少秒？",
+            opts: ["120 秒", "20 秒", "200 秒"],
+            a: 0,
+            hint: "1 分＝60 秒。",
+            tip: "1 分＝60 秒，2 分＝120 秒。"
+          },
+          {
+            q: "1 时 20 分等于多少分？",
+            opts: ["80 分", "120 分", "60 分"],
+            a: 0,
+            hint: "1 时先换成 60 分。",
+            tip: "1 时＝60 分，60＋20＝80（分）。"
+          },
+          {
+            q: "小明 7 时 30 分出门，走了 25 分钟到学校，他到学校是几时几分？",
+            opts: ["7 时 55 分", "7 时 45 分", "8 时 5 分"],
+            a: 0,
+            hint: "30 分＋25 分＝55 分。",
+            tip: "7 时 30 分＋25 分＝7 时 55 分。"
+          },
+          {
+            q: "3 分等于多少秒？",
+            opts: ["180 秒", "30 秒", "300 秒"],
+            a: 0,
+            hint: "3 个 60 秒。",
+            tip: "3×60＝180（秒）。"
+          },
+          {
+            q: "180 秒等于多少分？",
+            opts: ["3 分", "18 分", "1 分"],
+            a: 0,
+            hint: "60 秒是 1 分，180 里有几个 60？",
+            tip: "180÷60＝3（分）。"
+          }
+        ]
+      },
+      {
+        name: "测量能手", icon: "📐",
+        qs: [
+          {
+            q: "5 厘米等于多少毫米？",
+            opts: ["50 毫米", "5 毫米", "500 毫米"],
+            a: 0,
+            hint: "1 厘米＝10 毫米。",
+            tip: "1 厘米＝10 毫米，5 厘米＝50 毫米。"
+          },
+          {
+            q: "3 千米等于多少米？",
+            opts: ["3000 米", "300 米", "30 米"],
+            a: 0,
+            hint: "1 千米＝1000 米。",
+            tip: "1 千米＝1000 米，3 千米＝3000 米。"
+          },
+          {
+            q: "1 吨等于多少千克？",
+            opts: ["1000 千克", "100 千克", "10 千克"],
+            a: 0,
+            hint: "吨是很大的质量单位。",
+            tip: "1 吨＝1000 千克。"
+          },
+          {
+            q: "8 分米等于多少厘米？",
+            opts: ["80 厘米", "8 厘米", "800 厘米"],
+            a: 0,
+            hint: "1 分米＝10 厘米。",
+            tip: "1 分米＝10 厘米，8 分米＝80 厘米。"
+          },
+          {
+            q: "6000 米等于多少千米？",
+            opts: ["6 千米", "60 千米", "600 千米"],
+            a: 0,
+            hint: "1000 米是 1 千米。",
+            tip: "6000÷1000＝6（千米）。"
+          }
+        ]
+      },
+      {
+        name: "万以内加减", icon: "🔢",
+        qs: [
+          {
+            q: "356＋278＝？",
+            opts: ["634", "524", "633"],
+            a: 0,
+            hint: "个位 6＋8＝14，要进一。",
+            tip: "356＋278＝634。"
+          },
+          {
+            q: "702－458＝？",
+            opts: ["244", "254", "344"],
+            a: 0,
+            hint: "个位 2 减 8 不够，要退位。",
+            tip: "702－458＝244。"
+          },
+          {
+            q: "500－236＝？",
+            opts: ["264", "364", "274"],
+            a: 0,
+            hint: "连续退位，要小心。",
+            tip: "500－236＝264。"
+          },
+          {
+            q: "468＋257＝？",
+            opts: ["725", "715", "825"],
+            a: 0,
+            hint: "个位 8＋7＝15，十位 6＋5＋1＝12。",
+            tip: "468＋257＝725。"
+          },
+          {
+            q: "800－356＝？",
+            opts: ["444", "454", "344"],
+            a: 0,
+            hint: "连续退位。",
+            tip: "800－356＝444。"
+          }
+        ]
+      },
+      {
+        name: "乘法小火箭", icon: "🚀",
+        qs: [
+          {
+            q: "23×4＝？",
+            opts: ["92", "82", "86"],
+            a: 0,
+            hint: "先算 20×4，再算 3×4。",
+            tip: "20×4＝80，3×4＝12，80＋12＝92。"
+          },
+          {
+            q: "125×6＝？",
+            opts: ["750", "650", "725"],
+            a: 0,
+            hint: "先算 100×6，再算 25×6。",
+            tip: "100×6＝600，25×6＝150，600＋150＝750。"
+          },
+          {
+            q: "308×3＝？",
+            opts: ["924", "884", "942"],
+            a: 0,
+            hint: "中间的 0 也要乘。",
+            tip: "300×3＝900，8×3＝24，900＋24＝924。"
+          },
+          {
+            q: "46×3＝？",
+            opts: ["138", "128", "148"],
+            a: 0,
+            hint: "40×3 再加 6×3。",
+            tip: "40×3＝120，6×3＝18，120＋18＝138。"
+          },
+          {
+            q: "207×4＝？",
+            opts: ["828", "808", "848"],
+            a: 0,
+            hint: "200×4 再加 7×4。",
+            tip: "200×4＝800，7×4＝28，800＋28＝828。"
+          }
+        ]
+      },
+      {
+        name: "周长城堡", icon: "🏰",
+        qs: [
+          {
+            q: "长方形长 5 厘米、宽 3 厘米，周长是多少？",
+            opts: ["16 厘米", "8 厘米", "15 厘米"],
+            a: 0,
+            hint: "周长＝(长＋宽)×2。",
+            tip: "(5＋3)×2＝16（厘米）。"
+          },
+          {
+            q: "正方形边长 4 分米，周长是多少？",
+            opts: ["16 分米", "8 分米", "12 分米"],
+            a: 0,
+            hint: "周长＝边长×4。",
+            tip: "4×4＝16（分米）。"
+          },
+          {
+            q: "一个正方形的周长是 20 厘米，边长是多少？",
+            opts: ["5 厘米", "10 厘米", "4 厘米"],
+            a: 0,
+            hint: "周长除以 4 就是边长。",
+            tip: "20÷4＝5（厘米）。"
+          },
+          {
+            q: "长方形长 8 米、宽 2 米，周长是多少？",
+            opts: ["20 米", "16 米", "10 米"],
+            a: 0,
+            hint: "(8＋2)×2。",
+            tip: "(8＋2)×2＝20（米）。"
+          },
+          {
+            q: "一个长方形周长 24 厘米，长 8 厘米，宽是多少？",
+            opts: ["4 厘米", "6 厘米", "16 厘米"],
+            a: 0,
+            hint: "长＋宽＝周长÷2。",
+            tip: "24÷2＝12，12－8＝4（厘米）。"
+          }
+        ]
+      },
+      {
+        name: "分数果园", icon: "🍎",
+        qs: [
+          {
+            q: "把一个饼平均分成 4 份，每份是这个饼的几分之几？",
+            opts: ["1/4", "1/2", "4/1"],
+            a: 0,
+            hint: "平均分成 4 份，取其中 1 份。",
+            tip: "平均分成 4 份，每份是 1/4。"
+          },
+          {
+            q: "3/5 读作什么？",
+            opts: ["五分之三", "三分之五", "五分之二"],
+            a: 0,
+            hint: "先读分母，再读分子。",
+            tip: "3/5 读作五分之三。"
+          },
+          {
+            q: "1/2＋1/2＝？",
+            opts: ["1", "2/4", "1/4"],
+            a: 0,
+            hint: "两个一半合起来是一个整体。",
+            tip: "1/2＋1/2＝1（一个整体）。"
+          },
+          {
+            q: "2/3 读作什么？",
+            opts: ["三分之二", "二分之三", "三分之三"],
+            a: 0,
+            hint: "先读下面的分母 3。",
+            tip: "2/3 读作三分之二。"
+          },
+          {
+            q: "3/4 里面有几个 1/4？",
+            opts: ["3 个", "4 个", "1 个"],
+            a: 0,
+            hint: "分子是几，就有几个 1/4。",
+            tip: "3/4 里面有 3 个 1/4。"
+          }
+        ]
+      },
+      {
+        name: "集合小分队", icon: "🧺",
+        qs: [
+          {
+            q: "参加语文小组的有 8 人，参加数学小组的有 9 人，两个都参加的 3 人。一共有多少人？",
+            opts: ["14 人", "17 人", "20 人"],
+            a: 0,
+            hint: "8＋9 会把都参加的算两次。",
+            tip: "8＋9－3＝14（人）。"
+          },
+          {
+            q: "有 10 人喜欢吃苹果，12 人喜欢吃香蕉，两种都喜欢的有 4 人。一共有多少人？",
+            opts: ["18 人", "22 人", "26 人"],
+            a: 0,
+            hint: "10＋12－4。",
+            tip: "10＋12－4＝18（人）。"
+          },
+          {
+            q: "班级 30 人，参加合唱的 18 人，参加画画的 15 人，两个都参加的 8 人。都没参加的有几人？",
+            opts: ["5 人", "3 人", "7 人"],
+            a: 0,
+            hint: "先算至少参加一个的有多少人。",
+            tip: "18＋15－8＝25（人），30－25＝5（人）。"
+          },
+          {
+            q: "跳绳的有 12 人，踢毽子的有 10 人，两个都参加的 5 人。一共有多少人？",
+            opts: ["17 人", "22 人", "27 人"],
+            a: 0,
+            hint: "12＋10－5。",
+            tip: "12＋10－5＝17（人）。"
+          },
+          {
+            q: "喜欢猫的有 9 人，喜欢狗的有 11 人，两种都喜欢的有 4 人。一共有多少人？",
+            opts: ["16 人", "20 人", "24 人"],
+            a: 0,
+            hint: "9＋11－4。",
+            tip: "9＋11－4＝16（人）。"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+/* ================= 状态 ================= */
+const state = {
+  chapter: 0,
+  round: [],
+  li: 0, qi: 0,
+  rice: 0, stars: 0,
+  wrong: 0,
+  locked: false,
+  levelPerfect: true
+};
+
+const $ = id => document.getElementById(id);
+const whale = $("whale");
+const speech = $("speech");
+const toast = $("toast");
+
+/* ================= 音效 ================= */
+let ac = null;
+function beep(freqs, dur=0.12, type="sine"){
+  try{
+    if(!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+    if(ac.state === "suspended") ac.resume();
+    freqs.forEach((f, i) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = type; o.frequency.value = f;
+      const t0 = ac.currentTime + i * dur;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0); o.stop(t0 + dur + 0.02);
+    });
+  }catch(e){}
+}
+const soundGood = () => beep([660, 880, 1180], 0.1);
+const soundBad  = () => beep([300, 220], 0.16, "triangle");
+const soundWin  = () => beep([523, 659, 784, 1047], 0.14);
+
+/* ================= 背景音乐 ================= */
+const music = {
+  ctx: null, master: null, playing: false,
+  timer: null, nextTime: 0, step: 0, tempo: 104
+};
+const CHORDS = [
+  [261.63, 329.63, 392.00],
+  [220.00, 261.63, 329.63],
+  [174.61, 220.00, 261.63],
+  [196.00, 246.94, 293.66]
+];
+const MELODY = [
+  523.25, 659.25, 783.99, 659.25,
+  880.00, 783.99, 659.25, 587.33,
+  698.46, 880.00, 523.25, 880.00,
+  783.99, 659.25, 587.33, 523.25,
+  659.25, 783.99, 523.25, 659.25,
+  587.33, 523.25, 440.00, 392.00,
+  440.00, 523.25, 659.25, 783.99,
+  523.25, null, null, null
+];
+
+function musicNote(freq, t, dur, vol, type){
+  const o = music.ctx.createOscillator();
+  const g = music.ctx.createGain();
+  o.type = type || "triangle";
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(music.master);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+function musicStep(step, t){
+  const beat = 60 / music.tempo;
+  if(step % 8 === 0){
+    const ch = CHORDS[(step / 8) % CHORDS.length];
+    ch.forEach(f => musicNote(f, t, beat * 2.2, 0.018, "sine"));
+  }
+  if(step % 2 === 0){
+    const f = MELODY[(step / 2) % MELODY.length];
+    if(f) musicNote(f, t, beat * 0.85, 0.05, "triangle");
+  }
+}
+
+function musicStart(){
+  if(music.ctx){
+    if(!music.playing) musicPlay();
+    return;
+  }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return;
+  music.ctx = new AC();
+  music.master = music.ctx.createGain();
+  music.master.gain.value = 1;
+  music.master.connect(music.ctx.destination);
+
+  try{
+    const len = music.ctx.sampleRate * 3;
+    const buf = music.ctx.createBuffer(1, len, music.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for(let i = 0; i < len; i++){
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      d[i] = last * 3;
+    }
+    const src = music.ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const lp = music.ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 650;
+    const ng = music.ctx.createGain();
+    ng.gain.value = 0.06;
+    src.connect(lp); lp.connect(ng); ng.connect(music.master);
+    src.start();
+  }catch(e){}
+
+  musicPlay();
+}
+
+function musicPlay(){
+  if(!music.ctx || music.playing) return;
+  music.playing = true;
+  music.nextTime = music.ctx.currentTime + 0.15;
+  music.timer = setInterval(() => {
+    if(!music.ctx) return;
+    while(music.nextTime < music.ctx.currentTime + 0.25){
+      musicStep(music.step, music.nextTime);
+      music.nextTime += (60 / music.tempo) / 2;
+      music.step = (music.step + 1) % 64;
+    }
+  }, 60);
+}
+
+function musicStop(){
+  music.playing = false;
+  if(music.timer){ clearInterval(music.timer); music.timer = null; }
+}
+
+function musicToggle(){
+  if(music.playing){
+    musicStop();
+    return false;
+  }
+  musicStart();
+  return true;
+}
+
+/* ================= 工具 ================= */
+function say(text, ms=1400){
+  speech.textContent = text;
+  speech.classList.add("show");
+  clearTimeout(say.t);
+  say.t = setTimeout(() => speech.classList.remove("show"), ms);
+}
+function showToast(text){
+  toast.textContent = text;
+  toast.classList.add("show");
+  clearTimeout(showToast.t);
+  showToast.t = setTimeout(() => toast.classList.remove("show"), 1100);
+}
+
+/* 语音朗读：讲错题用，读完才允许下一题 */
+let speaking = false;
+function duckMusic(on){
+  try{
+    if(!music.ctx || !music.master) return;
+    const t = music.ctx.currentTime;
+    music.master.gain.cancelScheduledValues(t);
+    music.master.gain.setTargetAtTime(on ? 0.16 : 1, t, 0.12);
+  }catch(e){}
+}
+function speak(text, onEnd){
+  let done = false;
+  const finish = () => {
+    if(done) return;
+    done = true;
+    speaking = false;
+    duckMusic(false);
+    if(onEnd) onEnd();
+  };
+  try{
+    if(!("speechSynthesis" in window)){ finish(); return; }
+    window.speechSynthesis.cancel();
+    speaking = true;
+    duckMusic(true);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "zh-CN";
+    u.rate = 0.97;
+    u.pitch = 1.05;
+    const vs = window.speechSynthesis.getVoices();
+    const zh = vs.find(v => /^zh/i.test(v.lang)) ||
+               vs.find(v => /Chinese|Xiaoxiao|Yaoyao|Huihui/i.test(v.name));
+    if(zh) u.voice = zh;
+    u.onend = finish;
+    u.onerror = finish;
+    window.speechSynthesis.speak(u);
+    setTimeout(finish, Math.max(2800, text.length * 250));
+  }catch(e){ finish(); }
+}
+
+function fireworks(count){
+  const colors = ["#ff5252", "#ffca28", "#4caf50", "#42a5f5", "#ab47bc", "#ff7043", "#26c6da"];
+  for(let i = 0; i < count; i++){
+    setTimeout(() => {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = (4 + Math.random() * 92) + "vw";
+      c.style.top = "-20px";
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDuration = (1.8 + Math.random() * 1.4) + "s";
+      c.style.transform = `rotate(${Math.random() * 360}deg)`;
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3600);
+    }, i * 32);
+  }
+}
+
+function feedRice(fromEl){
+  const whaleEl = $("whale");
+  const wr = whaleEl.getBoundingClientRect();
+  const sr = fromEl ? fromEl.getBoundingClientRect() : null;
+  const startX = sr ? sr.left + sr.width / 2 : window.innerWidth / 2;
+  const startY = sr ? sr.top + 10 : window.innerHeight * 0.55;
+  const endX = wr.left + wr.width * 0.42;
+  const endY = wr.top + wr.height * 0.55;
+
+  const rice = document.createElement("div");
+  rice.className = "flying-rice";
+  rice.textContent = "🍚";
+  rice.style.left = startX + "px";
+  rice.style.top = startY + "px";
+  document.body.appendChild(rice);
+
+  requestAnimationFrame(() => {
+    rice.style.transform =
+      `translate(${endX - startX}px, ${endY - startY}px) scale(.55) rotate(200deg)`;
+    rice.style.opacity = "0.15";
+  });
+
+  setTimeout(() => {
+    rice.remove();
+    whaleEl.classList.add("eating");
+    setTimeout(() => whaleEl.classList.remove("eating"), 620);
+    showToast("啊呜～好吃！");
+  }, 740);
+}
+function makeBubbles(){
+  const box = $("bubbles");
+  for(let i=0;i<14;i++){
+    const b = document.createElement("div");
+    b.className = "bubble";
+    const s = 6 + Math.random()*22;
+    b.style.width = b.style.height = s + "px";
+    b.style.left = Math.random()*100 + "%";
+    b.style.animationDuration = (7 + Math.random()*8) + "s";
+    b.style.animationDelay = (-Math.random()*10) + "s";
+    box.appendChild(b);
+  }
+}
+
+/* ================= 渲染 ================= */
+function levels(){
+  return state.round;
+}
+
+function pick3(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, 3);
+}
+
+function chapterTotal(){
+  return levels().reduce((s, l) => s + l.qs.length, 0);
+}
+
+function renderDots(){
+  const box = $("dots");
+  box.innerHTML = "";
+  const lv = levels();
+  lv.forEach((l, i) => {
+    const d = document.createElement("div");
+    d.className = "dot" + (i < state.li ? " done" : i === state.li ? " now" : "");
+    box.appendChild(d);
+  });
+}
+
+function renderHud(){
+  $("riceHud").textContent = state.rice;
+  $("starHud").textContent = state.stars;
+  renderDots();
+}
+
+function currentQ(){
+  return levels()[state.li].qs[state.qi];
+}
+
+function renderQuestion(){
+  state.wrong = 0;
+  state.locked = false;
+  const lv = levels()[state.li];
+  const q = currentQ();
+  const isG3 = state.chapter === 1;
+  const tag = $("qtag");
+  tag.textContent = `第 ${state.li+1} 关 · ${lv.icon} ${lv.name}`;
+  tag.className = "qtag" + (isG3 ? " gold" : "");
+  $("qtext").innerHTML = q.q;
+  const box = $("opts");
+  box.innerHTML = "";
+  const letters = ["A", "B", "C", "D"];
+  q.opts.forEach((text, i) => {
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    btn.innerHTML = `<span class="k">${letters[i]}</span><span>${text}</span>`;
+    btn.onclick = () => choose(i, btn);
+    box.appendChild(btn);
+  });
+  const fb = $("feedback");
+  fb.className = "feedback";
+  fb.innerHTML = "";
+  $("nextBtn").classList.remove("show");
+  $("nextBtn").disabled = false;
+  renderHud();
+}
+
+/* ================= 答题 ================= */
+function choose(i, btn){
+  if(state.locked) return;
+  const q = currentQ();
+  const fb = $("feedback");
+  const opts = [...document.querySelectorAll(".opt")];
+
+  if(i === q.a){
+    state.locked = true;
+    btn.classList.add("correct");
+    opts.forEach(o => { if(o !== btn) o.classList.add("dim"); });
+    feedRice(btn);
+    state.rice += 1;
+    renderHud();
+    soundGood();
+    whale.classList.add("happy");
+    setTimeout(() => whale.classList.remove("happy"), 700);
+    const praises = ["太棒啦！", "答对啦！", "真厉害！", "干得漂亮！"];
+    showToast(praises[Math.floor(Math.random()*praises.length)]);
+    say(state.wrong === 0 ? "这题难不倒你～" : "对啦，记住这个方法哦");
+    fb.className = "feedback tip show";
+    fb.innerHTML = "✅ " + q.tip;
+    const lastQ = state.qi === levels()[state.li].qs.length - 1;
+    const lastL = state.li === levels().length - 1;
+    $("nextBtn").textContent = (lastQ && lastL) ? "看看成绩 →" : "下一题 →";
+    $("nextBtn").classList.add("show");
+    return;
+  }
+
+  state.wrong += 1;
+  state.levelPerfect = false;
+  btn.classList.add("wrong");
+  soundBad();
+  whale.classList.add("sad");
+  setTimeout(() => whale.classList.remove("sad"), 520);
+  setTimeout(() => btn.classList.remove("wrong"), 450);
+
+  if(state.wrong === 1){
+    fb.className = "feedback hint show";
+    fb.innerHTML = "🤔 再想一想：" + q.hint;
+    say("没关系，再想想～");
+    speak("再想一想，" + q.hint);
+  }else{
+    state.locked = true;
+    opts.forEach(o => { if(o !== btn) o.classList.add("dim"); });
+    opts[q.a].classList.add("correct");
+    fb.className = "feedback tip show";
+    fb.innerHTML = "💡 " + q.tip;
+    const nb = $("nextBtn");
+    nb.textContent = "先听鲸鱼娘讲完…";
+    nb.disabled = true;
+    nb.classList.add("show");
+    say("错啦，听鲸鱼娘说说为什么");
+    speak(q.tip, () => {
+      nb.disabled = false;
+      nb.textContent = "听懂啦，下一题 →";
+    });
+  }
+}
+
+/* ================= 流程 ================= */
+function nextQuestion(){
+  try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
+  speaking = false;
+  duckMusic(false);
+  const lv = levels()[state.li];
+  if(state.qi < lv.qs.length - 1){
+    state.qi += 1;
+    renderQuestion();
+    return;
+  }
+  if(state.li < levels().length - 1){
+    if(state.levelPerfect) state.stars += 1;
+    state.li += 1;
+    state.qi = 0;
+    state.levelPerfect = true;
+    say("过关啦，继续往前游！");
+    showToast("过关！");
+    soundWin();
+    renderQuestion();
+    return;
+  }
+  if(state.levelPerfect) state.stars += 1;
+  finish();
+}
+
+function finish(){
+  const maxRice = chapterTotal();
+  const score = Math.round(state.rice / maxRice * 100);
+  const passed = score >= 60;
+
+  let medal, praise, reward = "", big = false, speechText;
+
+  if(score === 100){
+    medal = "👑";
+    praise = "全部答对，满分！";
+    reward = "🎆 满分礼花 + 👑 鲸鱼娘的最高奖励：一个大大的鲸鱼抱抱！";
+    big = true;
+    speechText = "哇！一百分！全部答对！天天太厉害了，鲸鱼娘把最大的礼花都放出来啦，恭喜你！";
+  } else if(score >= 95){
+    medal = "🏆";
+    praise = "就差一点点满分！";
+    reward = "🏆 大奖：鲸鱼娘的金牌抱抱 + 限量星星贴纸！";
+    big = true;
+    speechText = score + "分，差一点点就满分，太棒啦！恭喜天天，大奖拿到手啦！";
+  } else if(score >= 90){
+    medal = "🥈";
+    praise = "很稳，继续保持！";
+    reward = "🎁 小奖励：鲸鱼娘的亲亲一枚 + 米饭加餐券！";
+    speechText = score + "分，很厉害！恭喜天天，小奖励收好啦！";
+  } else if(score >= 60){
+    medal = "🥉";
+    praise = "及格了，把错的再弄明白。";
+    speechText = score + "分，及格了。还可以，把错的题再弄明白就更好了。";
+  } else {
+    medal = "🌱";
+    praise = "这次没及格，要加油。";
+    speechText = score + "分，不及格！这样可不行，基础还没掌握牢，把错题一道一道重新做一遍，鲸鱼娘陪着你！";
+  }
+
+  $("endTitle").textContent = CHAPTERS[state.chapter].name + " 完成啦！";
+  $("medal").textContent = medal;
+  $("scoreNum").textContent = score;
+  const pl = $("passLine");
+  pl.textContent = passed ? "✅ 及格" : "❌ 不及格";
+  pl.className = "passline " + (passed ? "ok" : "no");
+  $("riceInfo").textContent = `答对 ${state.rice} / ${maxRice} 题 · 🍚 ${state.rice} 碗`;
+  $("praise").textContent = praise + `  ⭐ ${state.stars}`;
+
+  const rw = $("reward");
+  if(reward){
+    rw.style.display = "block";
+    rw.textContent = reward;
+    rw.className = "reward" + (big ? " big" : "");
+  }else{
+    rw.style.display = "none";
+  }
+
+  $("endScreen").classList.remove("hide");
+  soundWin();
+
+  if(score === 100) fireworks(90);
+
+  setTimeout(() => speak(speechText), 450);
+}
+
+function startChapter(idx){
+  state.chapter = idx;
+  state.li = 0; state.qi = 0; state.rice = 0; state.stars = 0;
+  state.wrong = 0; state.locked = false; state.levelPerfect = true;
+  try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
+  speaking = false;
+  duckMusic(false);
+  state.round = CHAPTERS[idx].levels.map(l => ({
+    name: l.name,
+    icon: l.icon,
+    qs: pick3(l.qs).map(q => shuffleQ(q))
+  }));
+  musicStart();
+  $("startScreen").classList.add("hide");
+  $("endScreen").classList.add("hide");
+  renderQuestion();
+}
+
+function shuffleQ(q){
+  const opts = q.opts.slice();
+  const correct = opts[q.a];
+  for(let i = opts.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { q: q.q, opts: opts, a: opts.indexOf(correct), hint: q.hint, tip: q.tip };
+}
+
+function goHome(){
+  try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
+  $("endScreen").classList.add("hide");
+  $("startScreen").classList.remove("hide");
+}
+
+/* ================= 启动 ================= */
+makeBubbles();
+$("btnG2").onclick = () => { soundWin(); startChapter(0); };
+$("btnG3").onclick = () => { soundWin(); startChapter(1); };
+$("againBtn").onclick = () => startChapter(state.chapter);
+$("homeBtn").onclick = goHome;
+$("nextBtn").onclick = nextQuestion;
+$("muteBtn").onclick = () => {
+  const on = musicToggle();
+  $("muteBtn").textContent = on ? "🔊" : "🔇";
+};
+
+document.addEventListener("dblclick", e => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>
