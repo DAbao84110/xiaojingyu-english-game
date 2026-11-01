@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b6bb5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
 <title>鲸鱼娘的大米饭冒险</title>
 <style>
   :root{
@@ -50,10 +54,11 @@
   .app{
     position:relative; z-index:2;
     width:min(520px,100%);
+    height:100vh;
     height:100dvh;
     margin:0 auto;
     display:flex; flex-direction:column;
-    padding:10px 14px 18px;
+    padding:10px 14px calc(14px + env(safe-area-inset-bottom, 0px));
   }
 
   .hud{
@@ -323,6 +328,15 @@
     box-shadow:0 12px 30px rgba(0,0,0,.25);
   }
   .toast.show{opacity:1; transform:translate(-50%,-50%) scale(1);}
+  @media (max-height: 680px){
+    .whale{font-size:52px;}
+    .stage{min-height:74px; max-height:120px;}
+    .q{font-size:16.5px; min-height:44px;}
+    .opt{padding:10px 12px; font-size:15.5px;}
+    .card{padding:13px 12px 12px;}
+    .title{font-size:24px;}
+    .bigwhale{font-size:64px;}
+  }
 </style>
 </head>
 <body>
