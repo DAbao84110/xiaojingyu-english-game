@@ -891,8 +891,8 @@ function pickVoices(){
   if(!synth) return;
   const vs = synth.getVoices() || [];
   if(!vs.length) return;
-  const en = vs.find(v => /^en-US/i.test(v.lang) && /(female|zira|samantha|jenny|aria|susan)/i.test(v.name))
-          || vs.find(v => /^en-US/i.test(v.lang))
+  const en = vs.find(v => /^en-GB/i.test(v.lang) && /(female|hazel|libby|sonia|george|ryan|mia)/i.test(v.name))
+          || vs.find(v => /^en-GB/i.test(v.lang))
           || vs.find(v => /^en[-_]/i.test(v.lang))
           || null;
   if(en) enVoice = en;
@@ -910,7 +910,7 @@ function speak(text, rate = 0.85){
   if(!synth || !text) return;
   try{ synth.cancel(); }catch(e){}
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "en-US";
+  u.lang = "en-GB";
   u.rate = rate;
   u.pitch = 1.05;
   if(enVoice) u.voice = enVoice;
@@ -932,7 +932,7 @@ function speakSegments(segs){
     segs.forEach(s => {
       const u = new SpeechSynthesisUtterance(s.text);
       if(s.lang === "en"){
-        u.lang = "en-US"; u.rate = 0.85;
+        u.lang = "en-GB"; u.rate = 0.85;
         if(enVoice) u.voice = enVoice;
       }else{
         u.lang = "zh-CN"; u.rate = 1.0;
