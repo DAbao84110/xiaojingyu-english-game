@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05283f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<title>听音唱音 · 小鲸唱歌课</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bubbles" id="bubbles" aria-hidden="true"></div>
+
+<div id="app">
+  <header class="topbar">
+    <button class="icon-btn" id="btnBack" aria-label="返回">‹</button>
+    <div class="brand" id="brand">听音唱音</div>
+    <div class="star-box"><span class="star-ico">⭐</span><span id="starCount">0</span></div>
+  </header>
+
+  <main>
+    <!-- 主页 -->
+    <section class="screen active" id="scrHome">
+      <div class="whale-stage" id="homeWhale"></div>
+      <h1 class="hero-title">听音唱音</h1>
+      <p class="hero-sub">听鲸鱼唱一个音，跟着唱出来～</p>
+      <div class="menu">
+        <button class="btn btn-primary" id="btnSingle">
+          <span class="ico">♪</span>
+          <span class="btn-txt">听音跟唱<small>听一个音，唱给我听</small></span>
+        </button>
+        <button class="btn btn-secondary" id="btnLadder">
+          <span class="ico">⇡</span>
+          <span class="btn-txt">音阶爬梯<small>do re mi 一层层爬上去</small></span>
+        </button>
+        <button class="btn btn-ghost" id="btnFree">
+          <span class="ico">●</span>
+          <span class="btn-txt">自由练声<small>随便唱，看指针跑到哪</small></span>
+        </button>
+      </div>
+      <p class="tip">💡 戴上耳机听得更清楚，唱的时候大声一点～</p>
+    </section>
+
+    <!-- 答题 -->
+    <section class="screen" id="scrPlay">
+      <div class="prompt" id="promptText">听好啦～</div>
+      <div class="whale-stage small" id="playWhale"></div>
+      <div class="note-card" id="noteCard">
+        <div class="note-sol" id="noteSol">do</div>
+        <div class="note-meta"><span id="noteDegree">1</span><span id="noteName">C4</span></div>
+      </div>
+      <div class="ruler" id="ruler">
+        <div class="ruler-zone"></div>
+        <div class="ruler-mid"></div>
+        <div class="needle idle" id="needle"></div>
+      </div>
+      <div class="ruler-labels"><span>低了</span><span>刚刚好</span><span>高了</span></div>
+      <div class="actions">
+        <button class="btn btn-ghost slim" id="btnReplay">⟳ 再听一次</button>
+        <button class="btn btn-primary slim" id="btnAgain" hidden>再试一次</button>
+      </div>
+      <div class="progress"><i id="progBar"></i></div>
+    </section>
+
+    <!-- 自由练声 -->
+    <section class="screen" id="scrFree">
+      <div class="prompt" id="freePrompt">唱一个音吧～</div>
+      <div class="free-note" id="freeNote">--</div>
+      <div class="free-name" id="freeName">听着呢</div>
+      <div class="ruler free" id="freeRuler">
+        <div class="ruler-mid"></div>
+        <div class="needle idle" id="freeNeedle"></div>
+      </div>
+      <div class="ruler-labels"><span>do</span><span>sol</span><span>高 do</span></div>
+      <div class="scale-strip" id="scaleStrip"></div>
+      <button class="btn btn-ghost slim" id="btnFreeStop">停下</button>
+    </section>
+  </main>
+
+  <!-- 结果浮层 -->
+  <div class="result-layer" id="resultLayer" hidden>
+    <div class="result-card" id="resultCard">
+      <div class="result-stars" id="resultStars">⭐⭐⭐</div>
+      <div class="result-title" id="resultTitle">太棒啦！</div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+  </div>
+</div>
+
+<script src="pitch.js"></script>
+<script src="audio.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
